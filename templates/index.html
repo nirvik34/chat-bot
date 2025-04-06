@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Agentic Chatbot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" rel="stylesheet" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      background: #f4f4f8;
+      padding: 40px 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .chat-container {
+      width: 100%;
+      max-width: 700px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 30px rgba(0,0,0,0.1);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: 90vh;
+    }
+
+    header {
+      padding: 24px;
+      border-bottom: 1px solid #eee;
+      background: #ffffff;
+    }
+
+    header h1 {
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    .chat-list {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .message {
+      display: flex;
+      margin-bottom: 18px;
+    }
+
+    .message.user {
+      flex-direction: row-reverse;
+    }
+
+    .message img.avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin: 0 10px;
+      background-color: #ddd;
+    }
+
+    .message .text {
+      max-width: 80%;
+      background: #f1f3f5;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 15px;
+    }
+
+    .message.user .text {
+      background: #d0e7ff;
+    }
+
+    .input-section {
+      border-top: 1px solid #eee;
+      padding: 16px;
+      background: #fff;
+    }
+
+    .input-form {
+      display: flex;
+      gap: 10px;
+    }
+
+    .input-form input[type="text"] {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1px solid #ccc;
+      border-radius: 12px;
+      font-size: 15px;
+    }
+
+    .input-form button {
+      padding: 0 16px;
+      background-color: #1a73e8;
+      color: white;
+      font-size: 16px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    .controls {
+      margin-top: 10px;
+      display: flex;
+      gap: 12px;
+    }
+
+    .controls button {
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: none;
+      background: #e9ecef;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .material-symbols-rounded {
+      vertical-align: middle;
+    }
+
+    .section-title {
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <header>
+      <h1>Agentic Chatbot</h1>
+    </header>
+
+    <div class="chat-list">
+      {% if response %}
+        <div class="message">
+          <img src="{{ url_for('static', filename='bot.jpg') }}" alt="Bot" class="avatar" />
+          <div class="text"><strong>Response:</strong><br>{{ response | safe }}</div>
+        </div>
+      {% endif %}
+
+      {% if history %}
+        {% for item in history %}
+          <div class="message user">
+            <img src="{{ url_for('static', filename='user.jpg') }}" alt="User" class="avatar" />
+            <div class="text"><strong>User:</strong> {{ item.user }}</div>
+          </div>
+          {% if item.agent_action %}
+            <div class="message">
+              <img src="{{ url_for('static', filename='bot.jpg') }}" alt="Bot" class="avatar" />
+              <div class="text"><strong>Agent Action:</strong> {{ item.agent_action }}</div>
+            </div>
+          {% endif %}
+          {% if item.result %}
+            <div class="message">
+              <img src="{{ url_for('static', filename='bot.jpg') }}" alt="Bot" class="avatar" />
+              <div class="text"><strong>Result:</strong> {{ item.result }}</div>
+            </div>
+          {% endif %}
+          {% if item.ai %}
+            <div class="message">
+              <img src="{{ url_for('static', filename='bot.jpg') }}" alt="Bot" class="avatar" />
+              <div class="text"><strong>AI:</strong><br>{{ item.ai | safe }}</div>
+            </div>
+          {% endif %}
+        {% endfor %}
+      {% else %}
+      {% endif %}
+    </div>
+
+    <div class="input-section">
+      <form method="POST" class="input-form">
+        <input type="text" name="command" placeholder="Type your message..." required>
+        <button type="submit"><span class="material-symbols-rounded">send</span></button>
+      </form>
+
+      <div class="controls">
+        <button id="listenButton"><span class="material-symbols-rounded">mic</span> Listen</button>
+        <button id="stopButton"><span class="material-symbols-rounded">stop_circle</span> Stop</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const listenButton = document.getElementById('listenButton');
+    const stopButton = document.getElementById('stopButton');
+    const responseArea = document.querySelector('.chat-list');
+
+    listenButton.addEventListener('click', function () {
+      fetch('/listen', {
+        method: 'POST'
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.response) {
+            const msg = document.createElement('div');
+            msg.className = 'message';
+            msg.innerHTML = `
+              <img src="{{ url_for('static', filename='bot.jpg') }}" alt="Bot" class="avatar" />
+              <div class="text"><strong>Response:</strong><br>${data.response}</div>`;
+            responseArea.prepend(msg);
+          }
+        });
+    });
+
+    stopButton.addEventListener('click', function () {
+      fetch('/stop_audio', {
+        method: 'POST'
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.response) {
+            const msg = document.createElement('div');
+            msg.className = 'message';
+            msg.innerHTML = `
+              <img src="{{ url_for('static', filename='bot.jpg') }}" alt="Bot" class="avatar" />
+              <div class="text"><strong>Stopped:</strong><br>${data.response}</div>`;
+            responseArea.prepend(msg);
+          }
+        });
+    });
+  </script>
+</body>
+</html>

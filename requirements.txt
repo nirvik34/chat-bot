@@ -1,0 +1,7 @@
+Flask
+SpeechRecognition
+gTTS
+pygame
+python-dotenv
+markdown
+requests
